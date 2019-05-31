@@ -57,6 +57,14 @@
           -H 'Content-Type: application/json' \
           -d '{"firstName": "Shing"}'
 
+# Serverless framework
+* Install node.js and npm (with [nvm](https://github.com/nvm-sh/nvm)).
+* npm install -i -D serverless-rust
+* Download the example: `npx serverless install --url https://github.com/softprops/serverless-aws-rust-http --name rust-serverless-example`
+* `cd rust-serverless-example`
+* Configure your AWS credential: https://serverless.com/framework/docs/providers/aws/guide/credentials/
+* `npm install && npx serverless deploy`
+
 # References
 * https://aws.amazon.com/blogs/opensource/rust-runtime-for-aws-lambda/
 
