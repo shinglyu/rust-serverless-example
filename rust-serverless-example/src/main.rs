@@ -1,9 +1,15 @@
+use std::error::Error;
 use lambda_http::{lambda, IntoResponse, Request, RequestExt};
 use lambda_runtime::{error::HandlerError, Context};
+use log::{self, info};
+use simple_logger;
 use serde_json::json;
 
-fn main() {
-    lambda!(handler)
+fn main() -> Result<(), Box<dyn Error>> {
+    simple_logger::init_with_level(log::Level::Debug)?;
+    lambda!(handler);
+
+    Ok(())
 }
 
 fn handler(
@@ -16,9 +22,12 @@ fn handler(
         Some(first_name) => json!({
             "message": format!("Hello, {}!", first_name),
         }).into_response(),
-        None => json!({
-            "message": "Hello there!"
-        }).into_response()
+        None => {
+            info!("No first_name is provided.");
+            json!({
+                "message": "Hello there!"
+            }).into_response()
+        }
     };
 
     Ok(response)
