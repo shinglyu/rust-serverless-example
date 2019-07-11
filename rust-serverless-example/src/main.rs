@@ -1,4 +1,4 @@
-use lambda_http::{lambda, IntoResponse, Request};
+use lambda_http::{lambda, IntoResponse, Request, RequestExt};
 use lambda_runtime::{error::HandlerError, Context};
 use serde_json::json;
 
@@ -7,14 +7,21 @@ fn main() {
 }
 
 fn handler(
-    _: Request,
+    req: Request,
     _: Context,
 ) -> Result<impl IntoResponse, HandlerError> {
     // `serde_json::Values` impl `IntoResponse` by default
     // creating an application/json response
-    Ok(json!({
-    "message": "Go Serverless v1.0! Your function executed successfully!"
-    }))
+    let response = match req.query_string_parameters().get("first_name") {
+        Some(first_name) => json!({
+            "message": format!("Hello, {}!", first_name),
+        }).into_response(),
+        None => json!({
+            "message": "Hello there!"
+        }).into_response()
+    };
+
+    Ok(response)
 }
 
 #[cfg(test)]
@@ -25,9 +32,8 @@ mod tests {
     fn handler_handles() {
         let request = Request::default();
         let expected = json!({
-        "message": "Go Serverless v1.0! Your function executed successfully!"
-        })
-        .into_response();
+            "message": "Hello there!"
+        }).into_response();
         let response = handler(request, Context::default())
             .expect("expected Ok(_) value")
             .into_response();
