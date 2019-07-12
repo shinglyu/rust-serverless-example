@@ -90,6 +90,21 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
+resources:
+  Resources:
+    NewResource:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: gift-codes
+        AttributeDefinitions:
+            - AttributeName: giftcode
+              AttributeType: S
+        KeySchema:
+            - AttributeName: giftcode
+              KeyType: HASH
+        ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
 #resources:
 #  Resources:
 #    NewResource:
