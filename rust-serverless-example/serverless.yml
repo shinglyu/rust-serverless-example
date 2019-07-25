@@ -20,20 +20,16 @@ provider:
 #  region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
+  iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+            - "dynamodb:ListTables"
+        Resource:
+            - "*"
+#             Fn::Join:
+#                 - ""
+#                 - - "arn:aws:dynamodb:::"
+#                   - "Ref" : "GiftCodesTable"
 
 # you can define service wide environment variables here
 #  environment:
@@ -92,7 +88,7 @@ functions:
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    NewResource:
+    GiftCodesTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: gift-codes
