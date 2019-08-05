@@ -23,7 +23,8 @@ provider:
   iamRoleStatements:
       - Effect: "Allow"
         Action:
-            - "dynamodb:ListTables"
+            # - "dynamodb:ListTables"
+            - "dynamodb:GetItem"
         Resource:
             - "*"
 #             Fn::Join:
