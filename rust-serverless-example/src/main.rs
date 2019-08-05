@@ -6,13 +6,12 @@ use std::error::Error;
 use lambda_http::{lambda, IntoResponse, Request, RequestExt};
 use lambda_http::http::{StatusCode, Response};
 use lambda_runtime::{error::HandlerError, Context};
-use log::{self, info};
+use log::{self};
 use simple_logger;
 use serde_json::json;
 
-use rusoto_core::{Region, RusotoError};
-use rusoto_dynamodb::{AttributeValue, DynamoDb, DynamoDbClient,
-    GetItemInput, GetItemOutput, GetItemError, ListTablesInput};
+use rusoto_core::{Region};
+use rusoto_dynamodb::{AttributeValue, DynamoDb, DynamoDbClient, GetItemInput};
 
 fn main() -> Result<(), Box<dyn Error>> {
     simple_logger::init_with_level(log::Level::Debug)?;
@@ -24,13 +23,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn handler(
     req: Request,
     _: Context,
-) -> Result<impl IntoResponse, HandlerError> {
+    ) -> Result<impl IntoResponse, HandlerError> {
     // `serde_json::Values` impl `IntoResponse` by default
     // creating an application/json response
 
     let client = DynamoDbClient::new(Region::UsEast1);
 
-    match req.query_string_parameters().get("giftcode") {
+    let response = match req.query_string_parameters().get("giftcode") {
         Some(giftcode) => {
             let mut key: HashMap<String, AttributeValue> = HashMap::new();
             key.insert("giftcode".to_string(), AttributeValue { s: Some(giftcode.to_string()), ..Default::default() });
@@ -53,47 +52,35 @@ fn handler(
                     println!("{:?}", output);
                     match output.item {
                         Some(item) => {
-                            return Ok(json!({
+                            json!({
                                 "giftcode": item.get("giftcode").unwrap().s,
                                 "status": item.get("status").unwrap().s,
-                            }).into_response())
+                            }).into_response()
                         }
                         None => {
-                            return Ok(
-                                Response::builder()
+                            Response::builder()
                                 .status(StatusCode::NOT_FOUND)
                                 .body("Gift code not found".into())
                                 .expect("Failed to render response")
-                            )
                         }
                     }
                 }
                 Err(error) => {
-                    return Ok(
-                        Response::builder()
+                    Response::builder()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
                         .body(format!("{:?}", error).into())
                         .expect("Failed to render response")
-                    )
                 }
             }
-            return Ok(
-                Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body("Unhandled error".into())
-                .expect("Failed to render response")
-            )
         }
         None => {
-            return Ok(
-                Response::builder()
+            Response::builder()
                 .status(StatusCode::BAD_REQUEST) // 400
                 .body("Missing parameter: giftcode".into())
                 .expect("Failed to render response")
-            )
         }
     };
-
+    Ok(response)
 }
 
 #[cfg(test)]
