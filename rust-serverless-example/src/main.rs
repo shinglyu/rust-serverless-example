@@ -27,60 +27,73 @@ fn handler(
 ) -> Result<impl IntoResponse, HandlerError> {
     // `serde_json::Values` impl `IntoResponse` by default
     // creating an application/json response
+
     let client = DynamoDbClient::new(Region::UsEast1);
 
-    let mut key: HashMap<String, AttributeValue> = HashMap::new();
-    key.insert("giftcode".to_string(), AttributeValue { s: Some("ABC124".to_string()), ..Default::default() });
+    match req.query_string_parameters().get("giftcode") {
+        Some(giftcode) => {
+            let mut key: HashMap<String, AttributeValue> = HashMap::new();
+            key.insert("giftcode".to_string(), AttributeValue { s: Some(giftcode.to_string()), ..Default::default() });
 
-    let get_item_input: GetItemInput = GetItemInput {
-        table_name: "gift-codes".to_string(),
-        key: key,
-        ..Default::default()
-        /*
-        attributes_to_get: None, // deprecated
-        consistent_read: None,
-        expression_attribute_names: None,
-        projection_expression: None, // return everything
-        return_consumed_capacity: None,
-        */
-    };
+            let get_item_input: GetItemInput = GetItemInput {
+                table_name: "gift-codes".to_string(),
+                key: key,
+                ..Default::default()
+                    /*
+                       attributes_to_get: None, // deprecated
+                       consistent_read: None,
+                       expression_attribute_names: None,
+                       projection_expression: None, // return everything
+                       return_consumed_capacity: None,
+                       */
+            };
 
-    match client.get_item(get_item_input).sync() {
-        Ok(output) => {
-            println!("{:?}", output);
-            match output.item {
-                Some(item) => {
-                    return Ok(json!({
-                        "giftcode": item.get("giftcode").unwrap().s,
-                        "status": item.get("status").unwrap().s,
-                    }).into_response())
+            match client.get_item(get_item_input).sync() {
+                Ok(output) => {
+                    println!("{:?}", output);
+                    match output.item {
+                        Some(item) => {
+                            return Ok(json!({
+                                "giftcode": item.get("giftcode").unwrap().s,
+                                "status": item.get("status").unwrap().s,
+                            }).into_response())
+                        }
+                        None => {
+                            return Ok(
+                                Response::builder()
+                                .status(StatusCode::NOT_FOUND)
+                                .body("Gift code not found".into())
+                                .expect("Failed to render response")
+                            )
+                        }
+                    }
                 }
-                None => {
+                Err(error) => {
                     return Ok(
                         Response::builder()
-                            .status(StatusCode::NOT_FOUND)
-                            .body("Gift code not found".into())
-                            .expect("Failed to render response")
+                        .status(StatusCode::INTERNAL_SERVER_ERROR)
+                        .body(format!("{:?}", error).into())
+                        .expect("Failed to render response")
                     )
                 }
             }
-        }
-        Err(error) => {
             return Ok(
                 Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(format!("{:?}", error).into())
+                .body("Unhandled error".into())
                 .expect("Failed to render response")
             )
         }
-    }
+        None => {
+            return Ok(
+                Response::builder()
+                .status(StatusCode::BAD_REQUEST) // 400
+                .body("Missing parameter: giftcode".into())
+                .expect("Failed to render response")
+            )
+        }
+    };
 
-    return Ok(
-        Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body("Unhandled error".into())
-        .expect("Failed to render response")
-    )
 }
 
 #[cfg(test)]
